@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Votación Viaje 2027</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: app de una columna para celular; pestaña Calificar (tarjetas por presentación con 3 criterios) y pestaña Resultados (pegar mensajes y ver ranking) */
+:root{
+  --bg:#F3F5FB; --card:#FFFFFF; --ink:#151933; --muted:#5D6482; --line:#DCE0EC;
+  --azul:#1F4FBF; --sol:#F5B700; --coral:#FF5A3C; --ok:#2E9E5B; --wa:#1F9D55;
+  --p-richi:#E0560F; --p-caro:#B5179E; --p-lu:#0A8F9C; --p-sebas:#1F4FBF;
+  --display:"Bricolage Grotesque","Arial Black",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1222; --card:#181C31; --ink:#EEF0F8; --muted:#A3A9C2; --line:#2A2F49;
+  --azul:#7C9DFF; --sol:#FFC93D; --coral:#FF7A5E; --ok:#3FBF72; --wa:#2FBF6B;
+  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0F1222; --card:#181C31; --ink:#EEF0F8; --muted:#A3A9C2; --line:#2A2F49;
+  --azul:#7C9DFF; --sol:#FFC93D; --coral:#FF7A5E; --ok:#3FBF72; --wa:#2FBF6B;
+  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.5}
+.wrap{max-width:720px; margin:0 auto; padding-block:24px 64px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:flex; flex-direction:column; gap:22px}
+h1,h2,h3{font-family:var(--display); margin:0; line-height:1.05; letter-spacing:-.02em; text-wrap:balance}
+h1{font-size:clamp(32px,7vw,52px); font-weight:800}
+h2{font-size:clamp(21px,4vw,26px); font-weight:800}
+h3{font-size:20px; font-weight:800}
+p{margin:0}
+.eyebrow{font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--azul)}
+.lead{color:var(--muted); max-width:60ch}
+header{display:flex; flex-direction:column; gap:10px}
+section{display:flex; flex-direction:column; gap:14px}
+.step{font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase}
+
+.tabs{display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:5px}
+.tabs button{font:inherit; font-weight:700; border:0; border-radius:10px; padding:10px; background:transparent; color:var(--muted); cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink); color:var(--bg)}
+
+.who{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+.who button{font:inherit; cursor:pointer; border:2px solid var(--line); background:var(--card); color:var(--ink); border-radius:14px; padding:12px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0}
+.who button[aria-pressed="true"]{border-color:var(--pc); box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 25%,transparent)}
+.av{width:42px; height:42px; border-radius:50%; background:var(--pc); color:#fff; display:grid; place-items:center; font-family:var(--display); font-weight:800; font-size:18px; flex:none}
+
+.pres{background:var(--card); border:1px solid var(--line); border-top:6px solid var(--pc); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:12px}
+.pres-head{display:flex; align-items:center; gap:12px}
+.pres-head .sub{font-size:13.5px; color:var(--muted)}
+.pres-head .score{margin-left:auto; font-family:var(--display); font-weight:800; font-size:24px; font-variant-numeric:tabular-nums; color:var(--pc); white-space:nowrap}
+.pres-head .score small{font-size:13px; color:var(--muted); font-family:var(--body); font-weight:600}
+fieldset{border:0; margin:0; padding:0; display:grid; gap:6px}
+legend{font-size:14px; font-weight:700; padding:0; margin-bottom:4px}
+legend span{font-weight:500; color:var(--muted)}
+.scale{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px}
+.scale input{position:absolute; opacity:0; pointer-events:none}
+.scale label{display:grid; place-items:center; height:42px; border-radius:10px; border:1.5px solid var(--line); font-weight:700; font-variant-numeric:tabular-nums; cursor:pointer; background:var(--bg); user-select:none}
+.scale input:checked + label{background:var(--pc); border-color:var(--pc); color:#fff}
+.scale input:focus-visible + label{outline:3px solid var(--sol); outline-offset:2px}
+.ends{display:flex; justify-content:space-between; font-size:12px; color:var(--muted)}
+
+.send{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:12px}
+.msg{font-family:var(--mono); font-size:13px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; white-space:pre-wrap; overflow-wrap:anywhere; user-select:all}
+.row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.btn{font:inherit; font-weight:700; cursor:pointer; border:0; border-radius:12px; padding:12px 18px; background:var(--ink); color:var(--bg); text-decoration:none; display:inline-flex; align-items:center; gap:8px}
+.btn.wa{background:var(--wa); color:#fff}
+.btn[aria-disabled="true"],.btn:disabled{opacity:.45; pointer-events:none}
+.ok{font-size:14px; color:var(--ok); font-weight:600}
+.hint{font-size:14px; color:var(--muted)}
+.linkbtn{font:inherit; font-size:14px; background:none; border:0; color:var(--azul); text-decoration:underline; cursor:pointer; padding:0}
+:focus-visible{outline:3px solid var(--sol); outline-offset:2px}
+
+textarea{font:inherit; font-size:14px; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; width:100%; min-height:130px; resize:vertical}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-size:13px; font-weight:600; border-radius:999px; padding:4px 12px; border:1px solid var(--line); background:var(--card); display:inline-flex; align-items:center; gap:6px}
+.chip i{width:10px; height:10px; border-radius:50%; background:var(--line)}
+.chip.on i{background:var(--ok)}
+.winner{border-radius:18px; padding:18px; background:var(--pc); color:#fff; display:flex; flex-direction:column; gap:4px}
+.winner .big{font-family:var(--display); font-weight:800; font-size:clamp(30px,7vw,44px); line-height:1.05}
+.rank{background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden}
+.rrow{display:grid; grid-template-columns:28px 42px 1fr auto; gap:12px; align-items:center; padding:14px 16px; border-top:1px solid var(--line)}
+.rrow:first-child{border-top:0}
+.rrow .pos{font-family:var(--mono); font-weight:700; color:var(--muted)}
+.rrow .nm{min-width:0; display:flex; flex-direction:column; gap:6px}
+.rrow .tr{height:10px; border-radius:999px; background:var(--bg); overflow:hidden}
+.rrow .tr i{display:block; height:100%; background:var(--pc); border-radius:999px}
+.rrow .det{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.rrow .tot{font-family:var(--display); font-weight:800; font-size:22px; font-variant-numeric:tabular-nums; text-align:right}
+.rrow .tot small{display:block; font-family:var(--body); font-size:12px; color:var(--muted); font-weight:600}
+.empty{background:var(--card); border:1px dashed var(--line); border-radius:18px; padding:18px; color:var(--muted); font-size:15px}
+@media (max-width:420px){ .who{grid-template-columns:repeat(2,minmax(0,1fr))} .rrow{grid-template-columns:22px 36px 1fr auto; gap:10px} .rrow .av{width:36px;height:36px;font-size:15px} }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Viaje 2027 · Votación</span>
+    <h1>Califica las presentaciones</h1>
+    <p class="lead">Cada uno califica las presentaciones de los otros tres. La tuya no la calificas. Tus notas salen en un código secreto que mandas al grupo de WhatsApp. El resultado solo se abre cuando estén los cuatro códigos, y nunca muestra quién puso qué.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-cal" aria-selected="true" aria-controls="view-cal">Calificar</button>
+    <button role="tab" id="tab-res" aria-selected="false" aria-controls="view-res">Resultados</button>
+  </div>
+
+  <!-- CALIFICAR -->
+  <div id="view-cal" role="tabpanel" style="display:flex;flex-direction:column;gap:22px">
+    <section>
+      <span class="step">Paso 1</span>
+      <h2>¿Quién eres?</h2>
+      <div class="who" id="who"></div>
+    </section>
+    <section id="sec-rate" hidden>
+      <span class="step">Paso 2</span>
+      <h2>Califica de 1 a 5</h2>
+      <p class="hint">1 es flojo y 5 es excelente. Son tres criterios por presentación, así que cada una puede sacar hasta 15 puntos contigo.</p>
+      <div id="cards" style="display:flex;flex-direction:column;gap:14px"></div>
+    </section>
+    <section id="sec-send" hidden>
+      <span class="step">Paso 3</span>
+      <h2>Envía tu voto secreto</h2>
+      <div class="send">
+        <p class="hint" id="sendHint">Te faltan calificaciones.</p>
+        <p class="hint">El mensaje dice que votaste, pero tus notas van cifradas. Nadie las puede leer en el chat.</p>
+        <div class="msg" id="msg"></div>
+        <div class="row">
+          <a class="btn wa" id="waBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">Enviar por WhatsApp</a>
+          <button class="btn" id="copyBtn" type="button" disabled>Copiar</button>
+          <span class="ok" id="copyOk" hidden>Copiado</span>
+        </div>
+        <p class="hint">Si el botón de WhatsApp no abre, toca Copiar y pégalo en el grupo.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div id="view-res" role="tabpanel" hidden style="display:flex;flex-direction:column;gap:22px">
+    <section>
+      <span class="step">Paso 1</span>
+      <h2>Pega los códigos del grupo</h2>
+      <p class="hint">Cuando hayan votado los cuatro, cualquiera copia del chat los cuatro mensajes con #V27 y los pega aquí, todos juntos. Si alguien manda dos veces, cuenta el último.</p>
+      <label for="paste" class="hint" hidden>Mensajes</label>
+      <textarea id="paste" placeholder="🗳️ Caro ya votó&#10;#V27-3fa91c…"></textarea>
+      <div class="row"><button class="linkbtn" id="clearBtn" type="button">Borrar lo pegado</button></div>
+      <div class="chips" id="got"></div>
+    </section>
+    <section>
+      <span class="step">Paso 2</span>
+      <h2>Ranking</h2>
+      <div id="results"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const PEOPLE=[{name:"Richi",color:"var(--p-richi)"},{name:"Caro",color:"var(--p-caro)"},{name:"Lu",color:"var(--p-lu)"},{name:"Sebas",color:"var(--p-sebas)"}];
+const NAMES=PEOPLE.map(p=>p.name);
+const CRIT=[{k:"destino",t:"Destino",d:"¿Qué tanto te antoja?"},{k:"plan",t:"Plan y logística",d:"Ruta, fechas y presupuesto"},{k:"pres",t:"Presentación",d:"Qué tan bien lo vendió"}];
+const colorOf=n=>(PEOPLE.find(p=>p.name===n)||{}).color||"var(--azul)";
+const $=id=>document.getElementById(id);
+const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="style")e.style.cssText=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?"":v);}for(const k of kids){if(k==null)continue;e.append(k.nodeType?k:document.createTextNode(String(k)));}return e;};
+const avatar=n=>el("span",{class:"av",style:`--pc:${colorOf(n)}`},n[0]);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+// ---------- estado local de este celular ----------
+let me = NAMES.includes(store.get("v27.me")) ? store.get("v27.me") : null;
+let scores = store.get("v27.scores") || {};   // {Richi:{destino:4,plan:5,pres:3}, ...}
+
+// ---------- pestañas ----------
+function showTab(which){
+  const cal=which==="cal";
+  $("tab-cal").setAttribute("aria-selected",String(cal)); $("tab-res").setAttribute("aria-selected",String(!cal));
+  $("view-cal").hidden=!cal; $("view-res").hidden=cal;
+}
+$("tab-cal").onclick=()=>showTab("cal"); $("tab-res").onclick=()=>showTab("res");
+if(location.hash==="#resultados") showTab("res");
+
+// ---------- calificar ----------
+function renderWho(){
+  const box=$("who"); box.replaceChildren();
+  for(const n of NAMES){
+    box.append(el("button",{type:"button",style:`--pc:${colorOf(n)}`,"aria-pressed":String(me===n),onclick:()=>{me=n;store.set("v27.me",n);renderAll();}},avatar(n),el("b",{},n)));
+  }
+}
+function others(){ return NAMES.filter(n=>n!==me); }
+const sumOf=n=>CRIT.reduce((s,c)=>s+((scores[n]||{})[c.k]||0),0);
+const complete=()=>me && others().every(n=>CRIT.every(c=>(scores[n]||{})[c.k]));
+
+function renderCards(){
+  $("sec-rate").hidden=!me; $("sec-send").hidden=!me;
+  const box=$("cards"); box.replaceChildren();
+  if(!me) return;
+  for(const n of others()){
+    const scoreEl=el("span",{class:"score"},String(sumOf(n)),el("small",{}," /15"));
+    const card=el("article",{class:"pres",style:`--pc:${colorOf(n)}`},
+      el("div",{class:"pres-head"},avatar(n),el("div",{},el("h3",{},"Presentación de "+n),el("span",{class:"sub"},"Tres criterios")),scoreEl));
+    for(const c of CRIT){
+      const fs=el("fieldset",{},el("legend",{},c.t+" ",el("span",{},"· "+c.d)));
+      const sc=el("div",{class:"scale"});
+      for(let v=1;v<=5;v++){
+        const id=`r-${n}-${c.k}-${v}`;
+        const inp=el("input",{type:"radio",name:`r-${n}-${c.k}`,id,value:String(v)});
+        if((scores[n]||{})[c.k]===v) inp.checked=true;
+        inp.addEventListener("change",()=>{saltFor=null;scores[n]={...(scores[n]||{}),[c.k]:v};store.set("v27.scores",scores);scoreEl.firstChild.textContent=String(sumOf(n));renderSend();});
+        sc.append(inp,el("label",{for:id},String(v)));
+      }
+      fs.append(sc,el("div",{class:"ends"},el("span",{},"Flojo"),el("span",{},"Excelente")));
+      card.append(fs);
+    }
+    box.append(card);
+  }
+}
+
+// ---------- código secreto ----------
+// Notas -> bytes [sal, votante, 9 notas, control], mezclados con una clave y escritos en hexadecimal.
+const KEY=[..."viaje2027-richi-caro-lu-sebas"].map(c=>c.charCodeAt(0));
+const ks=(salt,i)=>(KEY[(i*7+salt)%KEY.length]*31+salt*17+i*13+101)&255;
+const hex=b=>b.map(x=>x.toString(16).padStart(2,"0")).join("");
+let saltFor=null, salt=0;
+function encode(voter){
+  if(saltFor!==voter){ salt=Math.floor(Math.random()*256); saltFor=voter; }
+  const body=[NAMES.indexOf(voter)];
+  for(const n of NAMES.filter(x=>x!==voter)) for(const c of CRIT) body.push((scores[n]||{})[c.k]||0);
+  const sum=(body.reduce((a,b)=>a+b,0)*7+salt)&255;
+  return hex([salt,...body.map((b,i)=>b^ks(salt,i)),sum^ks(salt,40)]);
+}
+function decode(code){
+  if(!/^[0-9a-f]{24}$/i.test(code)) return null;
+  const b=code.match(/../g).map(h=>parseInt(h,16));
+  const s=b[0], body=b.slice(1,11).map((x,i)=>x^ks(s,i)), sum=b[11]^ks(s,40);
+  if(((body.reduce((a,v)=>a+v,0)*7+s)&255)!==sum) return null;
+  const vi=body[0]; if(vi<0||vi>3) return null;
+  const notas=body.slice(1); if(notas.some(v=>v<1||v>5)) return null;
+  const voter=NAMES[vi], marks={};
+  NAMES.filter(x=>x!==voter).forEach((n,j)=>marks[n]=notas.slice(j*3,j*3+3));
+  return {voter,marks};
+}
+function buildMessage(){
+  return `🗳️ ${me} ya votó\n#V27-${complete()?encode(me):"(faltan notas)"}`;
+}
+function renderSend(){
+  if(!me) return;
+  const done=complete();
+  const missing=others().filter(n=>!CRIT.every(c=>(scores[n]||{})[c.k]));
+  $("sendHint").textContent=done?"Listo. Envía este mensaje al grupo tal cual:":`Te falta calificar: ${missing.join(", ")}.`;
+  const text=buildMessage();
+  $("msg").textContent=text;
+  const wa=$("waBtn");
+  wa.href=done?"https://wa.me/?text="+encodeURIComponent(text):"#";
+  wa.setAttribute("aria-disabled",String(!done));
+  $("copyBtn").disabled=!done;
+}
+$("copyBtn").onclick=async()=>{
+  const text=buildMessage();
+  try{ await navigator.clipboard.writeText(text); const ok=$("copyOk"); ok.hidden=false; setTimeout(()=>ok.hidden=true,2000); }
+  catch(e){ const r=document.createRange(); r.selectNodeContents($("msg")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $("sendHint").textContent="Texto seleccionado: cópialo con el menú de tu celular."; }
+};
+
+// ---------- resultados ----------
+let badCodes=0;
+function parse(text){
+  const ballots={}; badCodes=0; // votante -> {presentador:[d,p,s]}
+  const re=/#V27-([0-9a-fA-F]{24})/g; let m;
+  while((m=re.exec(text))){ const d=decode(m[1]); if(d) ballots[d.voter]=d.marks; else badCodes++; } // el último de cada uno gana
+  if((text.match(/#V27-/g)||[]).length > (text.match(/#V27-[0-9a-fA-F]{24}/g)||[]).length) badCodes++;
+  return ballots;
+}
+let lastSummary="";
+function renderResults(){
+  const ballots=parse($("paste").value);
+  store.set("v27.paste",$("paste").value);
+  const got=$("got"); got.replaceChildren();
+  for(const n of NAMES) got.append(el("span",{class:"chip"+(ballots[n]?" on":"")},el("i"),n+(ballots[n]?" votó":" falta")));
+  if(badCodes) got.append(el("span",{class:"chip",style:"border-color:var(--coral)"},`${badCodes} código${badCodes===1?"":"s"} incompleto${badCodes===1?"":"s"}: cópialo otra vez`));
+  const box=$("results"); box.replaceChildren();
+  const voters=Object.keys(ballots);
+  if(voters.length<4){
+    box.append(el("div",{class:"empty"}, voters.length
+      ? `Van ${voters.length} de 4 códigos. El resultado se abre cuando estén los cuatro, para que nadie pueda ver votos sueltos.`
+      : "Cuando pegues los cuatro códigos, aquí aparece el ranking. Solo se muestran los totales, nunca quién puso qué."));
+    return;
+  }
+  const rows=NAMES.map(n=>{
+    const marks=voters.filter(v=>ballots[v][n]).map(v=>ballots[v][n]);
+    const tot=marks.reduce((s,m)=>s+m[0]+m[1]+m[2],0);
+    const avg=i=>marks.length?(marks.reduce((s,m)=>s+m[i],0)/marks.length):0;
+    return {n,tot,count:marks.length,max:marks.length*15,avgs:[avg(0),avg(1),avg(2)],prom:marks.length?tot/marks.length:0};
+  }).sort((a,b)=>b.prom-a.prom||b.tot-a.tot);
+  const allIn=voters.length===4;
+  const top=rows[0], tied=rows.filter(r=>r.prom===top.prom && r.count);
+  if(allIn){
+    if(tied.length===1) box.append(el("div",{class:"winner",style:`--pc:${colorOf(top.n)}`},el("span",{},"Gana la presentación de"),el("span",{class:"big"},top.n),el("span",{},`${top.tot} de ${top.max} puntos`)));
+    else box.append(el("div",{class:"empty"},`Empate entre ${tied.map(r=>r.n).join(" y ")}. Toca desempatar.`));
+  } else box.append(el("p",{class:"hint"},`Van ${voters.length} de 4. El ranking es parcial hasta que lleguen todas.`));
+  const rank=el("div",{class:"rank"});
+  rows.forEach((r,i)=>{
+    const pct=r.count?(r.prom/15*100):0;
+    rank.append(el("div",{class:"rrow",style:`--pc:${colorOf(r.n)}`},
+      el("span",{class:"pos"},String(i+1)),avatar(r.n),
+      el("div",{class:"nm"},el("b",{},r.n),el("div",{class:"tr"},el("i",{style:`width:${pct.toFixed(1)}%`})),
+        el("span",{class:"det"},r.count?`Destino ${r.avgs[0].toFixed(1)} · Plan ${r.avgs[1].toFixed(1)} · Presentación ${r.avgs[2].toFixed(1)}`:"Sin notas todavía")),
+      el("div",{class:"tot"},String(r.tot),el("small",{},r.count?`de ${r.max} · ${r.count} nota${r.count===1?"":"s"}`:"—"))));
+  });
+  box.append(rank);
+  lastSummary = ["🏆 Resultado Viaje 2027", ...rows.map((r,i)=>`${i+1}. ${r.n} · ${r.tot}/${r.max} pts`),
+    tied.length===1 ? `Gana la presentación de ${top.n} 🎉` : `Empate entre ${tied.map(r=>r.n).join(" y ")}`].join("\n");
+  const ok=el("span",{class:"ok",hidden:true},"Copiado");
+  box.append(el("div",{class:"row"},
+    el("a",{class:"btn wa",href:"https://wa.me/?text="+encodeURIComponent(lastSummary),target:"_blank",rel:"noopener"},"Enviar resultado al grupo"),
+    el("button",{class:"btn",type:"button",onclick:async()=>{try{await navigator.clipboard.writeText(lastSummary);ok.hidden=false;setTimeout(()=>ok.hidden=true,2000);}catch(e){}}},"Copiar resultado"), ok));
+}
+$("paste").addEventListener("input",renderResults);
+$("clearBtn").onclick=()=>{$("paste").value="";renderResults();};
+$("paste").value=store.get("v27.paste")||"";
+
+function renderAll(){ renderWho(); renderCards(); renderSend(); }
+renderAll(); renderResults();
+</script>
+
+</body>
+</html>
