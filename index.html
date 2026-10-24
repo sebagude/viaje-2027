@@ -15,7 +15,7 @@
 :root{
   --bg:#F3F5FB; --card:#FFFFFF; --ink:#151933; --muted:#5D6482; --line:#DCE0EC;
   --azul:#1F4FBF; --sol:#F5B700; --coral:#FF5A3C; --ok:#2E9E5B; --wa:#1F9D55;
-  --p-richi:#E0560F; --p-caro:#B5179E; --p-lu:#0A8F9C; --p-sebas:#1F4FBF;
+  --p-richi:#E0560F; --p-caro:#B5179E; --p-lu:#0A8F9C; --p-sebas:#1F4FBF; --p-sebas2:#5B3FD1;
   --display:"Bricolage Grotesque","Arial Black",system-ui,sans-serif;
   --body:"Figtree","Segoe UI",system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -23,11 +23,11 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1222; --card:#181C31; --ink:#EEF0F8; --muted:#A3A9C2; --line:#2A2F49;
   --azul:#7C9DFF; --sol:#FFC93D; --coral:#FF7A5E; --ok:#3FBF72; --wa:#2FBF6B;
-  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; color-scheme:dark } }
+  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; --p-sebas2:#A08BFF; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1222; --card:#181C31; --ink:#EEF0F8; --muted:#A3A9C2; --line:#2A2F49;
   --azul:#7C9DFF; --sol:#FFC93D; --coral:#FF7A5E; --ok:#3FBF72; --wa:#2FBF6B;
-  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; color-scheme:dark }
+  --p-richi:#FF8A4C; --p-caro:#E255C8; --p-lu:#2EC4D1; --p-sebas:#7C9DFF; --p-sebas2:#A08BFF; color-scheme:dark }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.5}
@@ -103,7 +103,7 @@ textarea{font:inherit; font-size:14px; color:var(--ink); background:var(--card);
   <header>
     <span class="eyebrow">Viaje 2027 · Votación</span>
     <h1>Califica las presentaciones</h1>
-    <p class="lead">Cada uno califica las presentaciones de los otros tres. La tuya no la calificas. Tus notas salen en un código secreto que mandas al grupo de WhatsApp. El resultado solo se abre cuando estén los cuatro códigos, y nunca muestra quién puso qué.</p>
+    <p class="lead">Hay cinco propuestas: Italia (Richi), Marruecos y Egipto (Caro), Grecia (Luisa), y Portugal e Ibiza y Sudáfrica y Mauricio (Sebas). Cada uno califica las de los demás; las propias no se califican. Tus notas salen en un código secreto que mandas al grupo de WhatsApp. El resultado solo se abre cuando estén los cuatro códigos, y nunca muestra quién puso qué.</p>
   </header>
 
   <div class="tabs" role="tablist">
@@ -121,7 +121,7 @@ textarea{font:inherit; font-size:14px; color:var(--ink); background:var(--card);
     <section id="sec-rate" hidden>
       <span class="step">Paso 2</span>
       <h2>Califica de 1 a 5</h2>
-      <p class="hint">1 es flojo y 5 es excelente. Son tres criterios por presentación, así que cada una puede sacar hasta 15 puntos contigo.</p>
+      <p class="hint" id="rateHint"></p>
       <div id="cards" style="display:flex;flex-direction:column;gap:14px"></div>
     </section>
     <section id="sec-send" hidden>
@@ -161,18 +161,27 @@ textarea{font:inherit; font-size:14px; color:var(--ink); background:var(--card);
 </div>
 
 <script>
-const PEOPLE=[{name:"Richi",color:"var(--p-richi)"},{name:"Caro",color:"var(--p-caro)"},{name:"Lu",color:"var(--p-lu)"},{name:"Sebas",color:"var(--p-sebas)"}];
+// ---------- viajeros y presentaciones ----------
+const PEOPLE=[{name:"Richi",color:"var(--p-richi)"},{name:"Caro",color:"var(--p-caro)"},{name:"Luisa",color:"var(--p-lu)"},{name:"Sebas",color:"var(--p-sebas)"}];
 const NAMES=PEOPLE.map(p=>p.name);
+const PRES=[
+  {id:"italia",    owner:"Richi", title:"Italia",               color:"var(--p-richi)"},
+  {id:"marruecos", owner:"Caro",  title:"Marruecos y Egipto",   color:"var(--p-caro)"},
+  {id:"grecia",    owner:"Luisa", title:"Grecia",               color:"var(--p-lu)"},
+  {id:"portugal",  owner:"Sebas", title:"Portugal e Ibiza",     color:"var(--p-sebas)"},
+  {id:"sudafrica", owner:"Sebas", title:"Sudáfrica y Mauricio", color:"var(--p-sebas2)"}
+];
 const CRIT=[{k:"destino",t:"Destino",d:"¿Qué tanto te antoja?"},{k:"plan",t:"Plan y logística",d:"Ruta, fechas y presupuesto"},{k:"pres",t:"Presentación",d:"Qué tan bien lo vendió"}];
 const colorOf=n=>(PEOPLE.find(p=>p.name===n)||{}).color||"var(--azul)";
+const presOf=id=>PRES.find(p=>p.id===id);
 const $=id=>document.getElementById(id);
 const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="style")e.style.cssText=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?"":v);}for(const k of kids){if(k==null)continue;e.append(k.nodeType?k:document.createTextNode(String(k)));}return e;};
-const avatar=n=>el("span",{class:"av",style:`--pc:${colorOf(n)}`},n[0]);
+const avatar=(n,color)=>el("span",{class:"av",style:`--pc:${color||colorOf(n)}`},n[0]);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
 // ---------- estado local de este celular ----------
-let me = NAMES.includes(store.get("v27.me")) ? store.get("v27.me") : null;
-let scores = store.get("v27.scores") || {};   // {Richi:{destino:4,plan:5,pres:3}, ...}
+let me = NAMES.includes(store.get("v27b.me")) ? store.get("v27b.me") : null;
+let scores = store.get("v27b.scores") || {};   // {italia:{destino:4,plan:5,pres:3}, ...}
 
 // ---------- pestañas ----------
 function showTab(which){
@@ -184,32 +193,34 @@ $("tab-cal").onclick=()=>showTab("cal"); $("tab-res").onclick=()=>showTab("res")
 if(location.hash==="#resultados") showTab("res");
 
 // ---------- calificar ----------
+const toRate=voter=>PRES.filter(p=>p.owner!==voter);
 function renderWho(){
   const box=$("who"); box.replaceChildren();
   for(const n of NAMES){
-    box.append(el("button",{type:"button",style:`--pc:${colorOf(n)}`,"aria-pressed":String(me===n),onclick:()=>{me=n;store.set("v27.me",n);renderAll();}},avatar(n),el("b",{},n)));
+    box.append(el("button",{type:"button",style:`--pc:${colorOf(n)}`,"aria-pressed":String(me===n),onclick:()=>{me=n;saltFor=null;store.set("v27b.me",n);renderAll();}},avatar(n),el("b",{},n)));
   }
 }
-function others(){ return NAMES.filter(n=>n!==me); }
-const sumOf=n=>CRIT.reduce((s,c)=>s+((scores[n]||{})[c.k]||0),0);
-const complete=()=>me && others().every(n=>CRIT.every(c=>(scores[n]||{})[c.k]));
+const sumOf=id=>CRIT.reduce((s,c)=>s+((scores[id]||{})[c.k]||0),0);
+const complete=()=>me && toRate(me).every(p=>CRIT.every(c=>(scores[p.id]||{})[c.k]));
 
 function renderCards(){
   $("sec-rate").hidden=!me; $("sec-send").hidden=!me;
   const box=$("cards"); box.replaceChildren();
   if(!me) return;
-  for(const n of others()){
-    const scoreEl=el("span",{class:"score"},String(sumOf(n)),el("small",{}," /15"));
-    const card=el("article",{class:"pres",style:`--pc:${colorOf(n)}`},
-      el("div",{class:"pres-head"},avatar(n),el("div",{},el("h3",{},"Presentación de "+n),el("span",{class:"sub"},"Tres criterios")),scoreEl));
+  const mine=PRES.filter(p=>p.owner===me).map(p=>p.title);
+  $("rateHint").textContent=`Te tocan ${toRate(me).length} presentaciones. ${mine.length>1?"Las tuyas":"La tuya"} (${mine.join(" y ")}) no ${mine.length>1?"las calificas":"la calificas"}. 1 es flojo y 5 es excelente; cada presentación puede sacar hasta 15 puntos contigo.`;
+  for(const p of toRate(me)){
+    const scoreEl=el("span",{class:"score"},String(sumOf(p.id)),el("small",{}," /15"));
+    const card=el("article",{class:"pres",style:`--pc:${p.color}`},
+      el("div",{class:"pres-head"},avatar(p.owner,p.color),el("div",{},el("h3",{},p.title),el("span",{class:"sub"},"Propuesta de "+p.owner)),scoreEl));
     for(const c of CRIT){
       const fs=el("fieldset",{},el("legend",{},c.t+" ",el("span",{},"· "+c.d)));
       const sc=el("div",{class:"scale"});
       for(let v=1;v<=5;v++){
-        const id=`r-${n}-${c.k}-${v}`;
-        const inp=el("input",{type:"radio",name:`r-${n}-${c.k}`,id,value:String(v)});
-        if((scores[n]||{})[c.k]===v) inp.checked=true;
-        inp.addEventListener("change",()=>{saltFor=null;scores[n]={...(scores[n]||{}),[c.k]:v};store.set("v27.scores",scores);scoreEl.firstChild.textContent=String(sumOf(n));renderSend();});
+        const id=`r-${p.id}-${c.k}-${v}`;
+        const inp=el("input",{type:"radio",name:`r-${p.id}-${c.k}`,id,value:String(v)});
+        if((scores[p.id]||{})[c.k]===v) inp.checked=true;
+        inp.addEventListener("change",()=>{saltFor=null;scores[p.id]={...(scores[p.id]||{}),[c.k]:v};store.set("v27b.scores",scores);scoreEl.firstChild.textContent=String(sumOf(p.id));renderSend();});
         sc.append(inp,el("label",{for:id},String(v)));
       }
       fs.append(sc,el("div",{class:"ends"},el("span",{},"Flojo"),el("span",{},"Excelente")));
@@ -220,27 +231,28 @@ function renderCards(){
 }
 
 // ---------- código secreto ----------
-// Notas -> bytes [sal, votante, 9 notas, control], mezclados con una clave y escritos en hexadecimal.
-const KEY=[..."viaje2027-richi-caro-lu-sebas"].map(c=>c.charCodeAt(0));
+// Notas -> bytes [sal, votante, notas..., control], mezclados con una clave y escritos en hexadecimal.
+const KEY=[..."viaje2027-richi-caro-luisa-sebas"].map(c=>c.charCodeAt(0));
 const ks=(salt,i)=>(KEY[(i*7+salt)%KEY.length]*31+salt*17+i*13+101)&255;
 const hex=b=>b.map(x=>x.toString(16).padStart(2,"0")).join("");
 let saltFor=null, salt=0;
 function encode(voter){
   if(saltFor!==voter){ salt=Math.floor(Math.random()*256); saltFor=voter; }
   const body=[NAMES.indexOf(voter)];
-  for(const n of NAMES.filter(x=>x!==voter)) for(const c of CRIT) body.push((scores[n]||{})[c.k]||0);
+  for(const p of toRate(voter)) for(const c of CRIT) body.push((scores[p.id]||{})[c.k]||0);
   const sum=(body.reduce((a,b)=>a+b,0)*7+salt)&255;
   return hex([salt,...body.map((b,i)=>b^ks(salt,i)),sum^ks(salt,40)]);
 }
 function decode(code){
-  if(!/^[0-9a-f]{24}$/i.test(code)) return null;
+  if(!/^[0-9a-f]+$/i.test(code) || code.length%2) return null;
   const b=code.match(/../g).map(h=>parseInt(h,16));
-  const s=b[0], body=b.slice(1,11).map((x,i)=>x^ks(s,i)), sum=b[11]^ks(s,40);
+  if(b.length<4) return null;
+  const s=b[0], body=b.slice(1,-1).map((x,i)=>x^ks(s,i)), sum=b[b.length-1]^ks(s,40);
   if(((body.reduce((a,v)=>a+v,0)*7+s)&255)!==sum) return null;
-  const vi=body[0]; if(vi<0||vi>3) return null;
-  const notas=body.slice(1); if(notas.some(v=>v<1||v>5)) return null;
-  const voter=NAMES[vi], marks={};
-  NAMES.filter(x=>x!==voter).forEach((n,j)=>marks[n]=notas.slice(j*3,j*3+3));
+  const vi=body[0]; if(!(vi>=0&&vi<NAMES.length)) return null;
+  const voter=NAMES[vi], list=toRate(voter), notas=body.slice(1);
+  if(notas.length!==list.length*3 || notas.some(v=>v<1||v>5)) return null;
+  const marks={}; list.forEach((p,j)=>marks[p.id]=notas.slice(j*3,j*3+3));
   return {voter,marks};
 }
 function buildMessage(){
@@ -249,7 +261,7 @@ function buildMessage(){
 function renderSend(){
   if(!me) return;
   const done=complete();
-  const missing=others().filter(n=>!CRIT.every(c=>(scores[n]||{})[c.k]));
+  const missing=toRate(me).filter(p=>!CRIT.every(c=>(scores[p.id]||{})[c.k])).map(p=>p.title);
   $("sendHint").textContent=done?"Listo. Envía este mensaje al grupo tal cual:":`Te falta calificar: ${missing.join(", ")}.`;
   const text=buildMessage();
   $("msg").textContent=text;
@@ -267,59 +279,55 @@ $("copyBtn").onclick=async()=>{
 // ---------- resultados ----------
 let badCodes=0;
 function parse(text){
-  const ballots={}; badCodes=0; // votante -> {presentador:[d,p,s]}
-  const re=/#V27-([0-9a-fA-F]{24})/g; let m;
+  const ballots={}; badCodes=0; // votante -> {presentación:[d,p,s]}
+  const re=/#V27-([0-9a-fA-F]+)/g; let m;
   while((m=re.exec(text))){ const d=decode(m[1]); if(d) ballots[d.voter]=d.marks; else badCodes++; } // el último de cada uno gana
-  if((text.match(/#V27-/g)||[]).length > (text.match(/#V27-[0-9a-fA-F]{24}/g)||[]).length) badCodes++;
   return ballots;
 }
 let lastSummary="";
 function renderResults(){
   const ballots=parse($("paste").value);
-  store.set("v27.paste",$("paste").value);
+  store.set("v27b.paste",$("paste").value);
   const got=$("got"); got.replaceChildren();
   for(const n of NAMES) got.append(el("span",{class:"chip"+(ballots[n]?" on":"")},el("i"),n+(ballots[n]?" votó":" falta")));
   if(badCodes) got.append(el("span",{class:"chip",style:"border-color:var(--coral)"},`${badCodes} código${badCodes===1?"":"s"} incompleto${badCodes===1?"":"s"}: cópialo otra vez`));
   const box=$("results"); box.replaceChildren();
   const voters=Object.keys(ballots);
-  if(voters.length<4){
+  if(voters.length<NAMES.length){
     box.append(el("div",{class:"empty"}, voters.length
       ? `Van ${voters.length} de 4 códigos. El resultado se abre cuando estén los cuatro, para que nadie pueda ver votos sueltos.`
-      : "Cuando pegues los cuatro códigos, aquí aparece el ranking. Solo se muestran los totales, nunca quién puso qué."));
+      : "Cuando pegues los cuatro códigos, aquí aparece el ranking de las cinco presentaciones. Solo se muestran los totales, nunca quién puso qué."));
     return;
   }
-  const rows=NAMES.map(n=>{
-    const marks=voters.filter(v=>ballots[v][n]).map(v=>ballots[v][n]);
+  const rows=PRES.map(p=>{
+    const marks=voters.filter(v=>ballots[v][p.id]).map(v=>ballots[v][p.id]);
     const tot=marks.reduce((s,m)=>s+m[0]+m[1]+m[2],0);
     const avg=i=>marks.length?(marks.reduce((s,m)=>s+m[i],0)/marks.length):0;
-    return {n,tot,count:marks.length,max:marks.length*15,avgs:[avg(0),avg(1),avg(2)],prom:marks.length?tot/marks.length:0};
+    return {p,tot,count:marks.length,max:marks.length*15,avgs:[avg(0),avg(1),avg(2)],prom:marks.length?tot/marks.length:0};
   }).sort((a,b)=>b.prom-a.prom||b.tot-a.tot);
-  const allIn=voters.length===4;
-  const top=rows[0], tied=rows.filter(r=>r.prom===top.prom && r.count);
-  if(allIn){
-    if(tied.length===1) box.append(el("div",{class:"winner",style:`--pc:${colorOf(top.n)}`},el("span",{},"Gana la presentación de"),el("span",{class:"big"},top.n),el("span",{},`${top.tot} de ${top.max} puntos`)));
-    else box.append(el("div",{class:"empty"},`Empate entre ${tied.map(r=>r.n).join(" y ")}. Toca desempatar.`));
-  } else box.append(el("p",{class:"hint"},`Van ${voters.length} de 4. El ranking es parcial hasta que lleguen todas.`));
+  const top=rows[0], tied=rows.filter(r=>r.prom===top.prom);
+  if(tied.length===1) box.append(el("div",{class:"winner",style:`--pc:${top.p.color}`},el("span",{},`Gana la propuesta de ${top.p.owner}`),el("span",{class:"big"},top.p.title),el("span",{},`${top.tot} de ${top.max} puntos`)));
+  else box.append(el("div",{class:"empty"},`Empate entre ${tied.map(r=>r.p.title).join(" y ")}. Toca desempatar.`));
   const rank=el("div",{class:"rank"});
   rows.forEach((r,i)=>{
     const pct=r.count?(r.prom/15*100):0;
-    rank.append(el("div",{class:"rrow",style:`--pc:${colorOf(r.n)}`},
-      el("span",{class:"pos"},String(i+1)),avatar(r.n),
-      el("div",{class:"nm"},el("b",{},r.n),el("div",{class:"tr"},el("i",{style:`width:${pct.toFixed(1)}%`})),
-        el("span",{class:"det"},r.count?`Destino ${r.avgs[0].toFixed(1)} · Plan ${r.avgs[1].toFixed(1)} · Presentación ${r.avgs[2].toFixed(1)}`:"Sin notas todavía")),
-      el("div",{class:"tot"},String(r.tot),el("small",{},r.count?`de ${r.max} · ${r.count} nota${r.count===1?"":"s"}`:"—"))));
+    rank.append(el("div",{class:"rrow",style:`--pc:${r.p.color}`},
+      el("span",{class:"pos"},String(i+1)),avatar(r.p.owner,r.p.color),
+      el("div",{class:"nm"},el("b",{},r.p.title),el("span",{class:"det"},"Propuesta de "+r.p.owner),el("div",{class:"tr"},el("i",{style:`width:${pct.toFixed(1)}%`})),
+        el("span",{class:"det"},`Destino ${r.avgs[0].toFixed(1)} · Plan ${r.avgs[1].toFixed(1)} · Presentación ${r.avgs[2].toFixed(1)}`)),
+      el("div",{class:"tot"},String(r.tot),el("small",{},`de ${r.max}`))));
   });
   box.append(rank);
-  lastSummary = ["🏆 Resultado Viaje 2027", ...rows.map((r,i)=>`${i+1}. ${r.n} · ${r.tot}/${r.max} pts`),
-    tied.length===1 ? `Gana la presentación de ${top.n} 🎉` : `Empate entre ${tied.map(r=>r.n).join(" y ")}`].join("\n");
+  lastSummary=["🏆 Resultado Viaje 2027",...rows.map((r,i)=>`${i+1}. ${r.p.title} (${r.p.owner}) · ${r.tot}/${r.max} pts`),
+    tied.length===1?`Gana ${top.p.title} 🎉`:`Empate entre ${tied.map(r=>r.p.title).join(" y ")}`].join("\n");
   const ok=el("span",{class:"ok",hidden:true},"Copiado");
   box.append(el("div",{class:"row"},
     el("a",{class:"btn wa",href:"https://wa.me/?text="+encodeURIComponent(lastSummary),target:"_blank",rel:"noopener"},"Enviar resultado al grupo"),
-    el("button",{class:"btn",type:"button",onclick:async()=>{try{await navigator.clipboard.writeText(lastSummary);ok.hidden=false;setTimeout(()=>ok.hidden=true,2000);}catch(e){}}},"Copiar resultado"), ok));
+    el("button",{class:"btn",type:"button",onclick:async()=>{try{await navigator.clipboard.writeText(lastSummary);ok.hidden=false;setTimeout(()=>ok.hidden=true,2000);}catch(e){}}},"Copiar resultado"),ok));
 }
 $("paste").addEventListener("input",renderResults);
 $("clearBtn").onclick=()=>{$("paste").value="";renderResults();};
-$("paste").value=store.get("v27.paste")||"";
+$("paste").value=store.get("v27b.paste")||"";
 
 function renderAll(){ renderWho(); renderCards(); renderSend(); }
 renderAll(); renderResults();
